@@ -1,0 +1,85 @@
+<html>
+    <head>
+        <title>substituion breaker</title>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    </head>
+    <body>
+        <textarea id="input" name="name" rows="8" cols="80"></textarea>
+        <br>
+        <button type="button" name="button" onclick="doUIThings()">do find thing</button>
+        <br>
+        <textarea id="output" name="name" rows="8" cols="80"></textarea>
+        <br>
+        <input id="shift" type="text" name="thing" value="">
+        <script>
+            var punctuation = [" ",";",",","\"",".","'"];
+            var reg = new RegExp(punctuation.map(function(e){return "\\"+e}).join(""),"g");
+            function shiftForward(input) {
+                var out = [];
+                for(var i = 0; i < input.length; i++) {
+                    if(punctuation.includes(input[i])) {
+                        out.push(input[i]);
+                    } else {
+                        var char = input[i].charCodeAt(0)-'a'.charCodeAt(0);
+                        char++;
+                        char%=26;
+                        out.push(String.fromCharCode(char+'a'.charCodeAt(0)));
+                    }
+                }
+                return out.join("");
+            }
+
+            function searchForWords(input) {
+                var w = input.split(" ");
+                var matches = 0;
+                for(var i = 0; i < w.length; i++) {
+                    var t = w[i].replace(reg, "");
+                    if(words.includes(t)) {
+                        matches++;
+                    }
+                }
+                return matches;
+            }
+
+            function searchSubstitutions(input) {
+                var lower = input.toLowerCase();
+                var best = "";
+                var bestMatch = 0;
+                var shift = 0;
+                var current = lower;
+                for(var i = 0; i < 26; i++) {
+                    current = shiftForward(current);
+                    var currentMatch = searchForWords(current);
+                    if(currentMatch >= bestMatch) {
+                        bestMatch = currentMatch;
+                        best = current;
+                        shift = i;
+                    }
+                }
+                return {
+                    "best":best,
+                    "shift":shift
+                };
+            }
+
+            function doUIThings() {
+                var input = $("#input").val();
+                var out = searchSubstitutions(input);
+                $("#output").text(out.best);
+                $("#shift").val("shift: "+((out.shift+1)%26));
+            }
+
+            var words = [];
+            $.ajax({
+                type: "GET",
+                url: "https://raw.githubusercontent.com/first20hours/google-10000-english/master/google-10000-english.txt",
+                success: function(content) {
+                    words = content.split('\n');
+                },
+                error: function() {
+                    console.log('error');
+                }
+            });
+        </script>
+    </body>
+</html>
